@@ -15,11 +15,18 @@ use App\Http\Controllers\Api\VoucherController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::get('vouchers', [VoucherController::class, 'index']); // Lấy danh sách voucher
-Route::post('addvouchers', [VoucherController::class, 'store']); // Tạo mới voucher
-Route::get('vouchers/{id}', [VoucherController::class, 'show']); // Lấy thông tin voucher theo id
-Route::put('vouchers/{id}', [VoucherController::class, 'update']); // Cập nhật thông tin voucher theo id
-Route::delete('vouchers/{id}', [VoucherController::class, 'destroy']); // Xóa voucher theo id
+// Lấy danh sách voucher
+Route::get('vouchers', [VoucherController::class, 'index']);
+// Tạo mới voucher
+Route::post('addvouchers', [VoucherController::class, 'store']);
+// Lấy thông tin voucher theo id
+Route::get('vouchers/{id}', [VoucherController::class, 'show']);
+// Cập nhật thông tin voucher theo id
+Route::put('vouchers/{id}', [VoucherController::class, 'update']);
+// Xóa voucher theo id
+Route::delete('vouchers/{id}', [VoucherController::class, 'destroy']);
+// Áp dụng voucher
+Route::post('vouchers/apply', [VoucherController::class, 'applyVoucher']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

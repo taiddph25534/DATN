@@ -18,9 +18,14 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-    
+        'name', 'email', 'password',
     ];
+
+    public function pointTransactions()
+    {
+        return $this->hasMany(PointTransaction::class, 'userID');
+    }
+
 
     /**
      * The attributes that should be hidden for serialization.
