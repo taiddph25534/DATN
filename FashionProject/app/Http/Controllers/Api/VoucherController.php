@@ -18,14 +18,13 @@ class VoucherController extends Controller
     {
         $request->validate([
             'code' => 'required|string|max:255|unique:vouchers',
-            'discountType' => 'required|string',
-            'discountValue' => 'required|numeric',
-            'expiryDate' => 'required|date',
-            'minPurchaseAmount' => 'required|numeric',
-            'pointRequired' => 'required|integer',
-            'type' => 'required|string',
-            'maxUsage' => 'integer|nullable',
-            'applicableProducts' => 'string|nullable',
+            'discount_type' => 'required|string',
+            'discount_value' => 'required|numeric',
+            'expiry_date' => 'required|date',
+            'min_purchase_amount' => 'required|numeric',
+            'point_required' => 'required|integer',
+            'max_usage' => 'integer|nullable',
+            'category_id' => 'integer|nullable|exists:categories,id',
             'distribution_channels' => 'string|nullable',
             'created_count' => 'required|integer',
         ]);
@@ -46,21 +45,20 @@ class VoucherController extends Controller
     {
         $request->validate([
             'code' => 'string|max:255|unique:vouchers,code,' . $id,
-            'discountType' => 'string',
-            'discountValue' => 'numeric',
-            'expiryDate' => 'date',
-            'minPurchaseAmount' => 'numeric',
-            'pointRequired' => 'integer',
-            'type' => 'string',
-            'maxUsage' => 'integer|nullable',
-            'applicableProducts' => 'string|nullable',
+            'discount_type' => 'string',
+            'discount_value' => 'numeric',
+            'expiry_date' => 'date',
+            'min_purchase_amount' => 'numeric',
+            'point_required' => 'integer',
+            'max_usage' => 'integer|nullable',
+            'category_id' => 'integer|nullable|exists:categories,id',
             'distribution_channels' => 'string|nullable',
             'created_count' => 'integer|nullable',
         ]);
 
         $voucher = Voucher::findOrFail($id);
         $voucher->update($request->all());
-        $voucher->remaining_count = $voucher->created_count - $voucher->usedCount;
+        $voucher->remaining_count = $voucher->created_count - $voucher->used_count;
         $voucher->save();
         return response()->json($voucher);
     }
@@ -86,24 +84,23 @@ class VoucherController extends Controller
             return response()->json(['message' => 'Voucher not found'], 404);
         }
 
-        if ($request->input('totalAmount') < $voucher->minPurchaseAmount) {
+        if ($request->input('totalAmount') < $voucher->min_purchase_amount) {
             return response()->json(['message' => 'Total amount is less than the minimum purchase amount required for this voucher'], 400);
         }
 
-        if ($voucher->maxUsage && $voucher->usedCount >= $voucher->maxUsage) {
+        if ($voucher->max_usage && $voucher->used_count >= $voucher->max_usage) {
             return response()->json(['message' => 'Voucher has been used the maximum number of times'], 400);
         }
 
-        if ($voucher->applicableProducts) {
-            $applicableProducts = explode(',', $voucher->applicableProducts);
-            $intersect = array_intersect($request->input('productIDs'), $applicableProducts);
-            if (empty($intersect)) {
+        if ($voucher->category_id) {
+            $productCategoryIDs = [];// get category ids of the provided product IDs from product table;
+            if (!in_array($voucher->category_id, $productCategoryIDs)) {
                 return response()->json(['message' => 'Voucher is not applicable to the selected products'], 400);
             }
         }
 
         $discount = $this->calculateDiscount($voucher, $request->input('totalAmount'));
-        $voucher->increment('usedCount');
+        $voucher->increment('used_count');
         $voucher->decrement('remaining_count');
 
         return response()->json(['discount' => $discount, 'newTotal' => $request->input('totalAmount') - $discount]);
@@ -111,12 +108,15 @@ class VoucherController extends Controller
 
     private function calculateDiscount($voucher, $totalAmount)
     {
-        if ($voucher->discountType == 'percentage') {
-            return ($totalAmount * $voucher->discountValue) / 100;
+        if ($voucher->discount_type == 'percentage') {
+            return ($totalAmount * $voucher->discount_value) / 100;
         }
 
-        return $voucher->discountValue;
+        return $voucher->discount_value;
     }
 }
+
+
+
 
 
